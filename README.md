@@ -22,14 +22,18 @@ Requer: `numpy` e `pandas` (ver versões em `requirements.txt`).
 
 ```
 forex_indicators/        # Pacote principal (implementações e exportações)
+roulette_indicators/     # Adaptação de roleta (features, ML, tuning)
 examples/
-  ├── example_usage.py  # Script de exemplo com dados sintéticos
-  └── outputs/          # Artefatos gerados pelos exemplos (CSV, etc.)
-notebooks/               # Notebooks de visualização e mini backtests
-tests/                   # Testes automatizados
-requirements.txt         # Dependências mínimas de runtime
-LICENSE                  # Licença
-README.md                # Este arquivo
+  ├── example_usage.py         # Script de exemplo com dados sintéticos (Forex)
+  ├── roulette_example.py      # Sumário de performance (frequências)
+  ├── roulette_fx_pipeline.py  # Pipeline aplicando indicadores Forex aos giros
+  ├── roulette_train_ml.py     # Treino/validação do modelo ML (Logistic OVR)
+  └── outputs/                 # Artefatos gerados (CSV, modelos JSON)
+notebooks/                     # Notebooks de visualização e mini backtests
+tests/                         # Testes automatizados
+requirements.txt               # Dependências mínimas de runtime
+LICENSE                        # Licença
+README.md                      # Este arquivo
 ```
 
 ## Uso rápido
@@ -89,13 +93,56 @@ Isso aumenta a interoperabilidade sem exigir renomeações manuais.
 
 Abra em seu ambiente Jupyter/VS Code. Se `yfinance` não estiver instalado, o notebook usará dados sintéticos.
 
+## Roleta com indicadores Forex
+
+Aplicamos indicadores de Forex a sequências de giros de roleta (europeia) para construir sinais e avaliar previsões:
+
+- Conversão de giros para série de preço/`OHLCV` sintético: `roulette_indicators/fx_adapter.py`
+- Indicadores como features: RSI, EMA, MACD(hist), ADX, Z-Score, entre outros
+- Pipeline de avaliação walk-forward com frequências: `roulette_indicators/fx_predict.py`
+- Geração de dados sintéticos de giros: `roulette_indicators/synthetic.py`
+
+Uso rápido (sumário de frequências):
+
+```bash
+python examples/roulette_example.py
+```
+
+Gera `examples/outputs/roulette_performance.csv` com acurácia por tarefa (R/B, H/L, D1/D2/D3, C1/C2/C3).
+
+Baseline em dados IID (roleta justa):
+- Cores e Altos/Baixos: ~ 18/37 ≈ 0.486
+- Dúzias e Colunas: ~ 12/37 ≈ 0.324
+
+Resultados reais podem diferir em séries coletadas com vieses. Meça sempre com validação temporal.
+
+## Pipeline de ML para roleta
+
+Treinamento e validação com features de histórico e indicadores Forex, modelo Logistic OVR:
+
+```bash
+python examples/roulette_train_ml.py
+```
+
+Salva modelos `.json` em `examples/outputs/` e imprime a acurácia de validação.
+
+## Tuning (busca em grade)
+
+Executa varredura de hiperparâmetros com validação temporal e features enriquecidas com indicadores Forex:
+
+```bash
+python examples/roulette_tuning.py
+```
+
+Mostra os melhores resultados por tarefa. Ajuste a grade conforme necessário.
+
 ## Testes
 
 ```bash
-python -m pytest -q
+python3 -m unittest -q
 ```
 
-Os testes cobrem a correção básica das fórmulas e a integridade das saídas. Contribuições com novos testes são bem-vindas.
+Os testes cobrem indicadores Forex e módulos de roleta, incluindo features, pipeline, ML e tuning. Contribuições com novos testes são bem-vindas.
 
 ## Boas práticas e performance
 
