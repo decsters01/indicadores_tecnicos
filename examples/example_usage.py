@@ -6,7 +6,8 @@ import pandas as pd
 
 from forex_indicators import (
     sma, ema, wma, macd, rsi, stochastic, bollinger_bands, atr, adx, cci, obv, mfi,
-    parabolic_sar, ichimoku, pivot_points, vwap, roc, williams_r, trix, donchian_channels
+    parabolic_sar, ichimoku, pivot_points, vwap, roc, williams_r, trix, donchian_channels,
+    normalize_ohlcv,
 )
 
 np.random.seed(42)
@@ -27,6 +28,10 @@ df = pd.DataFrame({
     "close": close,
     "volume": volume,
 }, index=index)
+
+# Exemplo: se suas colunas vierem com nomes variados (ex.: 'Close', 'Adj Close', 'VOL'),
+# você pode normalizar para open/high/low/close/volume com:
+# df = normalize_ohlcv(df)
 
 # Médias móveis
 df["sma_20"] = sma(df["close"], 20)

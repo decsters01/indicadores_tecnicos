@@ -60,6 +60,20 @@ A lista completa está disponível via `from forex_indicators import ...` e no a
 - As séries retornam `NaN` iniciais conforme o tamanho da janela (comportamento esperado).
 - O cálculo segue definições clássicas; pequenas diferenças podem ocorrer por arredondamento/inicialização.
 
+## Compatibilidade de dados
+
+- As funções aceitam `Series`/`DataFrame` com colunas em minúsculas.
+- Para dados vindos de provedores diversos (ex.: `Close`, `Adj Close`, `VOL`, `Last`), use o helper:
+
+```python
+from forex_indicators import normalize_ohlcv
+
+df = normalize_ohlcv(df)
+# Agora df terá colunas padronizadas: open/high/low/close/volume
+```
+
+Isso aumenta a interoperabilidade sem exigir renomeações manuais.
+
 ## Notebooks
 
 - `notebooks/forex_visualizations_v2.ipynb`: carrega EURUSD via `yfinance` (se disponível) ou gera dados sintéticos; plota EMA, Bollinger, Keltner, Supertrend, ADX, ATR etc.; inclui 2 mini backtests (EMA 20/50 e Supertrend).
