@@ -104,11 +104,23 @@ def _wilder_ema(series: pd.Series, period: int) -> pd.Series:
 # ==========================
 
 def sma(series: pd.Series, period: int) -> pd.Series:
-    """Simple Moving Average (Média Móvel Simples)
+    """SMA — Média Móvel Simples.
 
-    Parâmetros:
-    - series: série de preços (por ex. close)
-    - period: janela de cálculo
+    Resumo
+    - Suaviza a série de preços calculando a média aritmética de uma janela fixa.
+
+    Parâmetros
+    - series: pandas.Series com preços (ex.: close).
+    - period: int, tamanho da janela (> 0).
+
+    Retorna
+    - pandas.Series com a média móvel simples.
+
+    Sinônimos/AKA
+    - Simple Moving Average, MA, Moving Average.
+
+    Tags
+    - média móvel, smoothing, tendência, SMA, média aritmética
     """
     series = _validate_series(series, "series")
     if period <= 0:
@@ -121,7 +133,24 @@ def sma(series: pd.Series, period: int) -> pd.Series:
 # ==========================
 
 def ema(series: pd.Series, period: int) -> pd.Series:
-    """Exponential Moving Average (Média Móvel Exponencial)"""
+    """EMA — Média Móvel Exponencial.
+
+    Resumo
+    - Média móvel com ponderação exponencial, dando mais peso aos valores recentes.
+
+    Parâmetros
+    - series: pandas.Series com preços (ex.: close).
+    - period: int, período da EMA (> 0).
+
+    Retorna
+    - pandas.Series com a média móvel exponencial.
+
+    Sinônimos/AKA
+    - Exponential Moving Average.
+
+    Tags
+    - média móvel, smoothing, tendência, EMA, exponencial
+    """
     series = _validate_series(series, "series")
     if period <= 0:
         raise ValueError("period deve ser > 0")
@@ -133,7 +162,24 @@ def ema(series: pd.Series, period: int) -> pd.Series:
 # ==========================
 
 def wma(series: pd.Series, period: int) -> pd.Series:
-    """Weighted Moving Average (Média Móvel Ponderada)"""
+    """WMA — Média Móvel Ponderada.
+
+    Resumo
+    - Média que atribui pesos lineares maiores para observações mais recentes.
+
+    Parâmetros
+    - series: pandas.Series com preços.
+    - period: int, tamanho da janela (> 0).
+
+    Retorna
+    - pandas.Series com a média móvel ponderada.
+
+    Sinônimos/AKA
+    - Weighted Moving Average.
+
+    Tags
+    - média móvel, smoothing, tendência, WMA, ponderada
+    """
     series = _validate_series(series, "series")
     if period <= 0:
         raise ValueError("period deve ser > 0")
@@ -158,7 +204,26 @@ def macd(
     slow_period: int = 26,
     signal_period: int = 9,
 ) -> pd.DataFrame:
-    """MACD com linha de sinal e histograma"""
+    """MACD — Convergência/Divergência de Médias Móveis.
+
+    Resumo
+    - Diferença entre duas EMAs (rápida e lenta), sua linha de sinal e histograma.
+
+    Parâmetros
+    - close: pandas.Series de preços de fechamento.
+    - fast_period: int, período da EMA rápida.
+    - slow_period: int, período da EMA lenta.
+    - signal_period: int, período da EMA da linha de sinal.
+
+    Retorna
+    - pandas.DataFrame com colunas: macd, signal, hist.
+
+    Sinônimos/AKA
+    - Moving Average Convergence Divergence.
+
+    Tags
+    - momentum, tendência, cruzamento de médias, histograma, divergência
+    """
     close = _validate_series(close, "close")
     ema_fast = ema(close, fast_period)
     ema_slow = ema(close, slow_period)
@@ -173,7 +238,24 @@ def macd(
 # ==========================
 
 def rsi(close: pd.Series, period: int = 14) -> pd.Series:
-    """RSI de Wilder"""
+    """RSI — Índice de Força Relativa (Wilder).
+
+    Resumo
+    - Oscilador 0–100 que mede a velocidade e mudança dos movimentos de preço.
+
+    Parâmetros
+    - close: pandas.Series de preços de fechamento.
+    - period: int, período de suavização (padrão 14).
+
+    Retorna
+    - pandas.Series com valores de RSI (0–100).
+
+    Sinônimos/AKA
+    - Relative Strength Index.
+
+    Tags
+    - oscilador, momentum, sobrecompra, sobrevenda, Wilder, RSI
+    """
     close = _validate_series(close, "close")
     delta = close.diff()
     gains = delta.clip(lower=0.0)
@@ -198,7 +280,25 @@ def stochastic(
     k_period: int = 14,
     d_period: int = 3,
 ) -> pd.DataFrame:
-    """Oscilador Estocástico (%K e %D)"""
+    """Oscilador Estocástico — %K e %D.
+
+    Resumo
+    - Compara o fechamento atual com a faixa (HH-LL) recente para medir momentum.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - k_period: int, janela para %K.
+    - d_period: int, janela de suavização para %D (SMA de %K).
+
+    Retorna
+    - pandas.DataFrame com colunas: stoch_k, stoch_d (0–100).
+
+    Sinônimos/AKA
+    - Stoch, Stochastic Oscillator.
+
+    Tags
+    - oscilador, momentum, sobrecompra, sobrevenda, %K, %D
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -216,7 +316,25 @@ def stochastic(
 # ==========================
 
 def bollinger_bands(close: pd.Series, period: int = 20, num_std: float = 2.0) -> pd.DataFrame:
-    """Bandas de Bollinger (média, superior, inferior)"""
+    """Bandas de Bollinger — média, superior e inferior.
+
+    Resumo
+    - Faixas baseadas em desvio-padrão ao redor de uma média móvel.
+
+    Parâmetros
+    - close: pandas.Series de preços de fechamento.
+    - period: int, janela da média.
+    - num_std: float, multiplicador de desvio-padrão.
+
+    Retorna
+    - pandas.DataFrame com colunas: bb_mid, bb_upper, bb_lower.
+
+    Sinônimos/AKA
+    - Bollinger Bands.
+
+    Tags
+    - volatilidade, faixas, desvio-padrão, tendência, BB
+    """
     close = _validate_series(close, "close")
     mid = sma(close, period)
     std = close.rolling(window=period, min_periods=period).std(ddof=0)
@@ -230,7 +348,24 @@ def bollinger_bands(close: pd.Series, period: int = 20, num_std: float = 2.0) ->
 # ==========================
 
 def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
-    """Average True Range (Wilder)"""
+    """ATR — Faixa Média Verdadeira (Wilder).
+
+    Resumo
+    - Mede a volatilidade média considerando gaps e amplitudes de barras.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, período de suavização de Wilder.
+
+    Retorna
+    - pandas.Series com valores de ATR.
+
+    Sinônimos/AKA
+    - Average True Range.
+
+    Tags
+    - volatilidade, amplitude, Wilder, risco
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -249,7 +384,24 @@ def atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> 
 # ==========================
 
 def adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.DataFrame:
-    """Average Directional Index com +DI e -DI"""
+    """ADX — Índice Direcional Médio com +DI e -DI.
+
+    Resumo
+    - Quantifica a força da tendência usando componentes direcionais (+DI/-DI).
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, suavização de Wilder (padrão 14).
+
+    Retorna
+    - pandas.DataFrame com colunas: plus_di, minus_di, adx.
+
+    Sinônimos/AKA
+    - Average Directional Index.
+
+    Tags
+    - tendência, força de tendência, Wilder, +DI, -DI
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -284,7 +436,25 @@ def adx(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> 
 # ==========================
 
 def cci(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 20) -> pd.Series:
-    """Commodity Channel Index"""
+    """CCI — Índice do Canal de Commodities.
+
+    Resumo
+    - Mede a variação do preço em relação à sua média, normalizada pela média da
+      desvio absoluto.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, janela do cálculo.
+
+    Retorna
+    - pandas.Series com valores de CCI.
+
+    Sinônimos/AKA
+    - Commodity Channel Index.
+
+    Tags
+    - oscilador, momentum, desvio, TP, tendência
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -300,7 +470,24 @@ def cci(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 20) -> 
 # ==========================
 
 def obv(close: pd.Series, volume: pd.Series) -> pd.Series:
-    """On-Balance Volume"""
+    """OBV — On-Balance Volume.
+
+    Resumo
+    - Acumula volume positivo/negativo conforme variação do fechamento.
+
+    Parâmetros
+    - close: pandas.Series de preços de fechamento.
+    - volume: pandas.Series de volume.
+
+    Retorna
+    - pandas.Series com OBV cumulativo.
+
+    Sinônimos/AKA
+    - On Balance Volume.
+
+    Tags
+    - volume, fluxo de volume, momentum, OBV
+    """
     close = _validate_series(close, "close")
     volume = _validate_series(volume, "volume")
 
@@ -313,7 +500,25 @@ def obv(close: pd.Series, volume: pd.Series) -> pd.Series:
 # ==========================
 
 def mfi(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, period: int = 14) -> pd.Series:
-    """Money Flow Index"""
+    """MFI — Índice de Fluxo de Dinheiro.
+
+    Resumo
+    - Oscilador 0–100 que pondera preços pelo volume (variação do Typical Price).
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - volume: pandas.Series de volume.
+    - period: int, janela do cálculo.
+
+    Retorna
+    - pandas.Series com valores de MFI (0–100).
+
+    Sinônimos/AKA
+    - Money Flow Index.
+
+    Tags
+    - oscilador, volume, fluxo de dinheiro, sobrecompra, sobrevenda
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -338,9 +543,28 @@ def mfi(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, pe
 # ==========================
 
 def parabolic_sar(high: pd.Series, low: pd.Series, step: float = 0.02, max_step: float = 0.2) -> pd.Series:
-    """Parabolic SAR (implementação clássica). Retorna série SAR.
+    """Parabolic SAR — Stop And Reverse (implementação clássica).
 
-    Observação: cálculo iterativo e pode variar ligeiramente de outras bibliotecas."""
+    Resumo
+    - Indicador de tendência/stop que alterna entre movimentos ascendentes e descendentes.
+
+    Parâmetros
+    - high, low: pandas.Series de máximas e mínimas.
+    - step: float, incremento do fator de aceleração.
+    - max_step: float, limite do fator de aceleração.
+
+    Retorna
+    - pandas.Series com valores do SAR.
+
+    Sinônimos/AKA
+    - PSAR, Parabolic Stop and Reverse.
+
+    Tags
+    - tendência, stop, trailing stop, reversão, PSAR
+
+    Observações
+    - Cálculo iterativo; resultados podem variar ligeiramente entre implementações.
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
 
@@ -396,7 +620,21 @@ def parabolic_sar(high: pd.Series, low: pd.Series, step: float = 0.02, max_step:
 # ==========================
 
 def ichimoku(high: pd.Series, low: pd.Series, close: pd.Series) -> pd.DataFrame:
-    """Ichimoku Cloud: Tenkan, Kijun, Senkou A, Senkou B, Chikou"""
+    """Ichimoku Cloud — Tenkan, Kijun, Senkou A/B, Chikou.
+
+    Resumo
+    - Conjunto de linhas que identifica suporte/resistência, tendência e momentum.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+
+    Retorna
+    - pandas.DataFrame com colunas: ichimoku_tenkan, ichimoku_kijun,
+      ichimoku_senkou_a, ichimoku_senkou_b, ichimoku_chikou.
+
+    Tags
+    - tendência, suporte, resistência, nuvem, momentum, Ichimoku
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -421,7 +659,20 @@ def ichimoku(high: pd.Series, low: pd.Series, close: pd.Series) -> pd.DataFrame:
 # ==========================
 
 def pivot_points(high: pd.Series, low: pd.Series, close: pd.Series) -> pd.DataFrame:
-    """Pivot Points Clássicos (P, S1-3, R1-3)"""
+    """Pivots Clássicos — P, Suportes (S1–S3) e Resistências (R1–R3).
+
+    Resumo
+    - Níveis calculados a partir da barra anterior para suportes e resistências.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+
+    Retorna
+    - pandas.DataFrame com colunas: pp, r1, s1, r2, s2, r3, s3.
+
+    Tags
+    - suporte, resistência, pivots, day trading, níveis
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -450,7 +701,24 @@ def pivot_points(high: pd.Series, low: pd.Series, close: pd.Series) -> pd.DataFr
 # ==========================
 
 def vwap(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series) -> pd.Series:
-    """VWAP cumulativo (não reinicia por sessão)."""
+    """VWAP — Preço Médio Ponderado por Volume (cumulativo).
+
+    Resumo
+    - Preço médio ponderado pelo volume desde o início da série (sem reinício diário).
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - volume: pandas.Series de volume.
+
+    Retorna
+    - pandas.Series com valores de VWAP.
+
+    Sinônimos/AKA
+    - Volume Weighted Average Price.
+
+    Tags
+    - volume, preço médio, benchmark, institucional, VWAP
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -467,7 +735,25 @@ def vwap(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series) -
 # ==========================
 
 def roc(series: pd.Series, period: int = 12, as_percent: bool = True) -> pd.Series:
-    """Rate of Change do preço"""
+    """ROC — Taxa de Variação do preço.
+
+    Resumo
+    - Mede a variação relativa do preço entre t e t−period.
+
+    Parâmetros
+    - series: pandas.Series de preços.
+    - period: int, defasagem.
+    - as_percent: bool, se True retorna em % (×100).
+
+    Retorna
+    - pandas.Series com ROC (em fração ou %).
+
+    Sinônimos/AKA
+    - Rate of Change.
+
+    Tags
+    - momentum, retorno, variação, percentual, ROC
+    """
     series = _validate_series(series, "series")
     shifted = series.shift(period)
     roc_val = series / shifted - 1.0
@@ -481,7 +767,21 @@ def roc(series: pd.Series, period: int = 12, as_percent: bool = True) -> pd.Seri
 # ==========================
 
 def williams_r(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
-    """Williams %R"""
+    """Williams %R — Oscilador de momentum (0 a -100).
+
+    Resumo
+    - Compara o fechamento com a faixa HH-LL do período para medir pressão de compra/venda.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, janela (padrão 14).
+
+    Retorna
+    - pandas.Series com valores %R (escala negativa, 0 a -100).
+
+    Tags
+    - oscilador, momentum, sobrecompra, sobrevenda, Williams R
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -497,7 +797,21 @@ def williams_r(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 
 # ==========================
 
 def trix(close: pd.Series, period: int = 15) -> pd.Series:
-    """TRIX: ROC de 1 período da EMA tripla"""
+    """TRIX — ROC de 1 período da EMA tripla.
+
+    Resumo
+    - Oscilador de momentum baseado em suavização tripla do preço.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - period: int, período da EMA.
+
+    Retorna
+    - pandas.Series com TRIX (%).
+
+    Tags
+    - oscilador, momentum, suavização, EMA, TRIX
+    """
     close = _validate_series(close, "close")
     ema1 = ema(close, period)
     ema2 = ema(ema1, period)
@@ -510,7 +824,21 @@ def trix(close: pd.Series, period: int = 15) -> pd.Series:
 # ==========================
 
 def donchian_channels(high: pd.Series, low: pd.Series, period: int = 20) -> pd.DataFrame:
-    """Canais de Donchian (superior, inferior, meio)"""
+    """Canais de Donchian — superior, inferior e meio.
+
+    Resumo
+    - Faixas definidas pelos extremos (HH/LL) de uma janela deslizante.
+
+    Parâmetros
+    - high, low: pandas.Series OHLC (H e L).
+    - period: int, janela (padrão 20).
+
+    Retorna
+    - pandas.DataFrame com colunas: donchian_upper, donchian_lower, donchian_mid.
+
+    Tags
+    - breakout, canais, tendência, faixa, Donchian
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
 
@@ -532,7 +860,23 @@ def keltner_channels(
     atr_period: int = 10,
     multiplier: float = 2.0,
 ) -> pd.DataFrame:
-    """Keltner Channels: média EMA(close, period) ± multiplier * ATR(atr_period)."""
+    """Keltner Channels — EMA ± multiplicador de ATR.
+
+    Resumo
+    - Canais centrados na EMA do fechamento com largura baseada no ATR.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, período da EMA central.
+    - atr_period: int, período do ATR.
+    - multiplier: float, multiplicador do ATR.
+
+    Retorna
+    - pandas.DataFrame com colunas: kc_mid, kc_upper, kc_lower.
+
+    Tags
+    - volatilidade, canais, ATR, EMA, tendência, Keltner
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -554,7 +898,23 @@ def supertrend(
     period: int = 10,
     multiplier: float = 3.0,
 ) -> pd.DataFrame:
-    """Supertrend indicador: retorna linhas de tendência e sinal (+1/-1)."""
+    """Supertrend — Linhas de tendência e sinal (+1/-1).
+
+    Resumo
+    - Define tendência com base em bandas de ATR; alterna entre alta e baixa.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, período do ATR.
+    - multiplier: float, multiplicador do ATR para as bandas.
+
+    Retorna
+    - pandas.DataFrame com colunas: supertrend, supertrend_trend, supertrend_upper,
+      supertrend_lower.
+
+    Tags
+    - tendência, ATR, stop móvel, bandas, supertrend
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -621,7 +981,25 @@ def supertrend(
 # ==========================
 
 def ppo(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
-    """PPO, sua linha de sinal e histograma."""
+    """PPO — Oscilador Percentual de Preço.
+
+    Resumo
+    - MACD em termos percentuais (razão entre EMAs), com sinal e histograma.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - fast, slow: int, períodos das EMAs rápida e lenta.
+    - signal: int, período da EMA da linha de sinal.
+
+    Retorna
+    - pandas.DataFrame com colunas: ppo, ppo_signal, ppo_hist.
+
+    Sinônimos/AKA
+    - Percentage Price Oscillator.
+
+    Tags
+    - momentum, percentual, MACD, EMAs, PPO
+    """
     close = _validate_series(close, "close")
     ema_fast = ema(close, fast)
     ema_slow = ema(close, slow)
@@ -641,7 +1019,23 @@ def kama(
     fast_period: int = 2,
     slow_period: int = 30,
 ) -> pd.Series:
-    """Kaufman Adaptive Moving Average."""
+    """KAMA — Média Móvel Adaptativa de Kaufman.
+
+    Resumo
+    - Ajusta a suavização conforme a eficiência do movimento (ER).
+
+    Parâmetros
+    - series: pandas.Series de preços.
+    - er_period: int, janela para eficiência (ER).
+    - fast_period: int, período mínimo de suavização.
+    - slow_period: int, período máximo de suavização.
+
+    Retorna
+    - pandas.Series com KAMA.
+
+    Tags
+    - média móvel, adaptativa, suavização, eficiência, KAMA
+    """
     series = _validate_series(series, "series")
     change = series.diff(er_period).abs()
     volatility = series.diff().abs().rolling(er_period).sum()
@@ -665,7 +1059,25 @@ def kama(
 # ==========================
 
 def tsi(close: pd.Series, long: int = 25, short: int = 13) -> pd.Series:
-    """True Strength Index."""
+    """TSI — Índice de Força Verdadeira.
+
+    Resumo
+    - Oscilador baseado em EMAs do momentum e do momentum absoluto.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - long: int, período da primeira EMA.
+    - short: int, período da segunda EMA.
+
+    Retorna
+    - pandas.Series com TSI (%).
+
+    Sinônimos/AKA
+    - True Strength Index.
+
+    Tags
+    - oscilador, momentum, EMA dupla, TSI
+    """
     close = _validate_series(close, "close")
     momentum = close.diff()
     ema1 = ema(momentum.fillna(0.0), long)
@@ -680,7 +1092,24 @@ def tsi(close: pd.Series, long: int = 25, short: int = 13) -> pd.Series:
 # ==========================
 
 def dpo(close: pd.Series, period: int = 20) -> pd.Series:
-    """DPO: close deslocado menos SMA(period)"""
+    """DPO — Oscilador de Preço Detrendido.
+
+    Resumo
+    - Remove tendência de longo prazo subtraindo a SMA deslocada do preço.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - period: int, janela da SMA.
+
+    Retorna
+    - pandas.Series com DPO.
+
+    Sinônimos/AKA
+    - Detrended Price Oscillator.
+
+    Tags
+    - oscilador, detrending, SMA, ciclo, DPO
+    """
     close = _validate_series(close, "close")
     shift = int(period / 2) + 1
     return close.shift(shift) - sma(close, period)
@@ -691,7 +1120,21 @@ def dpo(close: pd.Series, period: int = 20) -> pd.Series:
 # ==========================
 
 def aroon(high: pd.Series, low: pd.Series, period: int = 25) -> pd.DataFrame:
-    """Aroon Up/Down e Oscillator."""
+    """Aroon — Up/Down e Oscilador.
+
+    Resumo
+    - Mede o tempo desde os últimos extremos para avaliar a tendência.
+
+    Parâmetros
+    - high, low: pandas.Series de máximas e mínimas.
+    - period: int, janela (padrão 25).
+
+    Retorna
+    - pandas.DataFrame com colunas: aroon_up, aroon_down, aroon_osc.
+
+    Tags
+    - tendência, tempo desde extremos, oscilador, Aroon
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
 
@@ -715,7 +1158,25 @@ def aroon(high: pd.Series, low: pd.Series, period: int = 25) -> pd.DataFrame:
 # ==========================
 
 def cmf(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, period: int = 20) -> pd.Series:
-    """Chaikin Money Flow."""
+    """CMF — Fluxo de Dinheiro de Chaikin.
+
+    Resumo
+    - Mede pressão de compra/venda combinando localização do fechamento na barra e volume.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - volume: pandas.Series de volume.
+    - period: int, janela do cálculo.
+
+    Retorna
+    - pandas.Series com valores de CMF.
+
+    Sinônimos/AKA
+    - Chaikin Money Flow.
+
+    Tags
+    - volume, fluxo de dinheiro, pressão, CMF
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -732,7 +1193,24 @@ def cmf(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, pe
 # ==========================
 
 def adl(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series) -> pd.Series:
-    """Accumulation/Distribution Line (ADL)."""
+    """ADL — Linha de Acumulação/Distribuição.
+
+    Resumo
+    - Acumula fluxo de dinheiro por barra para estimar pressão de compra/venda.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - volume: pandas.Series de volume.
+
+    Retorna
+    - pandas.Series com a linha ADL cumulativa.
+
+    Sinônimos/AKA
+    - Accumulation/Distribution Line.
+
+    Tags
+    - volume, fluxo de dinheiro, pressão, ADL
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -744,7 +1222,22 @@ def adl(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series) ->
 
 
 def chaikin_oscillator(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, short: int = 3, long: int = 10) -> pd.Series:
-    """Chaikin Oscillator = EMA(ADL, short) - EMA(ADL, long)."""
+    """Oscilador de Chaikin — EMA(ADL, curto) − EMA(ADL, longo).
+
+    Resumo
+    - Oscilador baseado em EMA da ADL para medir aceleração do fluxo de dinheiro.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - volume: pandas.Series de volume.
+    - short, long: períodos das EMAs.
+
+    Retorna
+    - pandas.Series com o oscilador de Chaikin.
+
+    Tags
+    - volume, fluxo de dinheiro, oscilador, Chaikin
+    """
     line = adl(high, low, close, volume)
     return ema(line, short) - ema(line, long)
 
@@ -754,7 +1247,21 @@ def chaikin_oscillator(high: pd.Series, low: pd.Series, close: pd.Series, volume
 # ==========================
 
 def elder_ray(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 13) -> pd.DataFrame:
-    """Elder Ray: Bull Power e Bear Power."""
+    """Elder Ray — Bull Power e Bear Power.
+
+    Resumo
+    - Mede a força de compradores/vendedores relativa a uma EMA de base.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, período da EMA base.
+
+    Retorna
+    - pandas.DataFrame com colunas: elder_bull, elder_bear.
+
+    Tags
+    - força, compradores, vendedores, EMA, Elder
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -769,7 +1276,22 @@ def elder_ray(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 1
 # ==========================
 
 def force_index(close: pd.Series, volume: pd.Series, period: int = 13) -> pd.DataFrame:
-    """Force Index bruto e suavizado por EMA(period)."""
+    """Force Index — bruto e suavizado por EMA(period).
+
+    Resumo
+    - Mede a força do movimento combinando variação de preço e volume.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - volume: pandas.Series de volume.
+    - period: int, período da EMA.
+
+    Retorna
+    - pandas.DataFrame com colunas: force_index, force_index_ema.
+
+    Tags
+    - volume, momentum, força, EMA, Elder
+    """
     close = _validate_series(close, "close")
     volume = _validate_series(volume, "volume")
     fi_raw = close.diff() * volume
@@ -782,7 +1304,21 @@ def force_index(close: pd.Series, volume: pd.Series, period: int = 13) -> pd.Dat
 # ==========================
 
 def ultimate_oscillator(high: pd.Series, low: pd.Series, close: pd.Series, p1: int = 7, p2: int = 14, p3: int = 28) -> pd.Series:
-    """Ultimate Oscillator (0..100)."""
+    """Ultimate Oscillator — 0..100.
+
+    Resumo
+    - Combina três horizontes de tempo do Buying Pressure/TR para um oscilador composto.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - p1, p2, p3: int, janelas de agregação.
+
+    Retorna
+    - pandas.Series com Ultimate Oscillator (0–100).
+
+    Tags
+    - oscilador, momentum, múltiplos períodos, UO
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -804,7 +1340,25 @@ def ultimate_oscillator(high: pd.Series, low: pd.Series, close: pd.Series, p1: i
 # ==========================
 
 def eom(high: pd.Series, low: pd.Series, volume: pd.Series, period: int = 14) -> pd.Series:
-    """Ease of Movement com SMA(period)."""
+    """Ease of Movement — suavizado por SMA(period).
+
+    Resumo
+    - Relaciona deslocamento do preço à facilidade do movimento considerando o volume.
+
+    Parâmetros
+    - high, low: pandas.Series OHLC (H e L).
+    - volume: pandas.Series de volume.
+    - period: int, janela da SMA.
+
+    Retorna
+    - pandas.Series com EOM suavizado.
+
+    Sinônimos/AKA
+    - EoM.
+
+    Tags
+    - volume, facilidade, deslocamento, SMA, EOM
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     volume = _validate_series(volume, "volume")
@@ -819,7 +1373,22 @@ def eom(high: pd.Series, low: pd.Series, volume: pd.Series, period: int = 14) ->
 # ==========================
 
 def mass_index(high: pd.Series, low: pd.Series, ema_period: int = 9, sum_period: int = 25) -> pd.Series:
-    """Mass Index padrão: soma de 25 períodos da razão EMA(range)/EMA(EMA(range))."""
+    """Mass Index — soma da razão EMA(range)/EMA(EMA(range)).
+
+    Resumo
+    - Detecta reversões por expansão/contração do range (sem direção de tendência).
+
+    Parâmetros
+    - high, low: pandas.Series de máximas e mínimas.
+    - ema_period: int, período das EMAs internas.
+    - sum_period: int, janela de soma (padrão 25).
+
+    Retorna
+    - pandas.Series com Mass Index.
+
+    Tags
+    - volatilidade, range, reversão, EMAs, Mass Index
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     rng = (high - low).abs()
@@ -834,7 +1403,22 @@ def mass_index(high: pd.Series, low: pd.Series, ema_period: int = 9, sum_period:
 # ==========================
 
 def qstick(open_: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
-    """Qstick = SMA(close - open, period)."""
+    """Qstick — SMA(close − open, period).
+
+    Resumo
+    - Mede predominância de candles de alta/baixa via média do corpo do candle.
+
+    Parâmetros
+    - open_: pandas.Series de abertura.
+    - close: pandas.Series de fechamento.
+    - period: int, janela da SMA.
+
+    Retorna
+    - pandas.Series com Qstick.
+
+    Tags
+    - candles, corpo, SMA, predominância, Qstick
+    """
     open_ = _validate_series(open_, "open")
     close = _validate_series(close, "close")
     return sma(close - open_, period)
@@ -845,7 +1429,21 @@ def qstick(open_: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
 # ==========================
 
 def vortex(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.DataFrame:
-    """Vortex Indicator: VI+ e VI-."""
+    """Vortex Indicator — VI+ e VI-.
+
+    Resumo
+    - Avalia a direção da tendência usando movimento direcional cruzado entre barras.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, janela de acumulação.
+
+    Retorna
+    - pandas.DataFrame com colunas: vi_plus, vi_minus.
+
+    Tags
+    - tendência, direcional, VI, cruzamentos, vortex
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -870,7 +1468,23 @@ def vortex(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) 
 # ==========================
 
 def stoch_rsi(close: pd.Series, rsi_period: int = 14, stoch_period: int = 14, d_period: int = 3) -> pd.DataFrame:
-    """Stochastic RSI: stochRSI e sinal (SMA d_period)."""
+    """Stochastic RSI — valor e sinal (SMA de d_period).
+
+    Resumo
+    - Aplica o estocástico sobre a série do RSI, destacando extremos de momentum.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - rsi_period: int, período do RSI.
+    - stoch_period: int, janela do estocástico.
+    - d_period: int, suavização (SMA) para o sinal.
+
+    Retorna
+    - pandas.DataFrame com colunas: stoch_rsi, stoch_rsi_signal (0–100).
+
+    Tags
+    - oscilador, momentum, sobrecompra, sobrevenda, RSI, estocástico
+    """
     close = _validate_series(close, "close")
     rsi_val = rsi(close, rsi_period)
     min_rsi = rsi_val.rolling(stoch_period, min_periods=stoch_period).min()
@@ -885,7 +1499,25 @@ def stoch_rsi(close: pd.Series, rsi_period: int = 14, stoch_period: int = 14, d_
 # ==========================
 
 def pvo(volume: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
-    """PVO (sobre volume), sua linha de sinal e histograma."""
+    """PVO (sobre volume), sua linha de sinal e histograma.
+
+    Resumo
+    - Oscilador tipo MACD aplicado ao volume (em termos percentuais).
+
+    Parâmetros
+    - volume: pandas.Series de volume.
+    - fast, slow: int, períodos das EMAs.
+    - signal: int, período da EMA de sinal.
+
+    Retorna
+    - pandas.DataFrame com colunas: pvo, pvo_signal, pvo_hist.
+
+    Sinônimos/AKA
+    - Percentage Volume Oscillator.
+
+    Tags
+    - volume, momentum, MACD, percentual, PVO
+    """
     volume = _validate_series(volume, "volume")
     ema_fast = ema(volume, fast)
     ema_slow = ema(volume, slow)
@@ -900,7 +1532,20 @@ def pvo(volume: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> p
 # ==========================
 
 def kst(close: pd.Series) -> pd.DataFrame:
-    """KST padrão e sinal (SMA 9)."""
+    """KST — Know Sure Thing (padrão) e sinal (SMA 9).
+
+    Resumo
+    - Soma ponderada de ROCs suavizados em múltiplos horizontes, com linha de sinal.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+
+    Retorna
+    - pandas.DataFrame com colunas: kst, kst_signal.
+
+    Tags
+    - momentum, múltiplos períodos, ROC, KST, sinal
+    """
     close = _validate_series(close, "close")
     # Componentes padrão (Pring):
     r1 = roc(close, 10, as_percent=False).rolling(10).mean()
@@ -917,7 +1562,23 @@ def kst(close: pd.Series) -> pd.DataFrame:
 # ==========================
 
 def bop(open_: pd.Series, high: pd.Series, low: pd.Series, close: pd.Series) -> pd.Series:
-    """Balance of Power: (close - open) / (high - low)."""
+    """Balance of Power — (close − open) / (high − low).
+
+    Resumo
+    - Estima dominância de compradores/vendedores dentro da barra.
+
+    Parâmetros
+    - open_, high, low, close: pandas.Series OHLC.
+
+    Retorna
+    - pandas.Series com BOP.
+
+    Sinônimos/AKA
+    - BOP.
+
+    Tags
+    - força, compradores, vendedores, barra, BOP
+    """
     open_ = _validate_series(open_, "open")
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
@@ -930,7 +1591,24 @@ def bop(open_: pd.Series, high: pd.Series, low: pd.Series, close: pd.Series) -> 
 # ==========================
 
 def hma(series: pd.Series, period: int = 20) -> pd.Series:
-    """Hull Moving Average."""
+    """HMA — Média Móvel de Hull.
+
+    Resumo
+    - Média móvel com baixa defasagem e boa suavização via WMA.
+
+    Parâmetros
+    - series: pandas.Series de preços.
+    - period: int, janela base da HMA.
+
+    Retorna
+    - pandas.Series com HMA.
+
+    Sinônimos/AKA
+    - Hull Moving Average.
+
+    Tags
+    - média móvel, WMA, suavização, atraso, HMA
+    """
     series = _validate_series(series, "series")
     if period <= 1:
         return series.copy()
@@ -947,7 +1625,24 @@ def hma(series: pd.Series, period: int = 20) -> pd.Series:
 # ==========================
 
 def dema(series: pd.Series, period: int = 20) -> pd.Series:
-    """DEMA = 2*EMA - EMA(EMA)."""
+    """DEMA — 2×EMA − EMA(EMA).
+
+    Resumo
+    - Reduz atraso da EMA combinando primeira e segunda suavizações.
+
+    Parâmetros
+    - series: pandas.Series de preços.
+    - period: int, período da EMA.
+
+    Retorna
+    - pandas.Series com DEMA.
+
+    Sinônimos/AKA
+    - Double Exponential Moving Average.
+
+    Tags
+    - média móvel, suavização, atraso, EMA, DEMA
+    """
     series = _validate_series(series, "series")
     e1 = ema(series, period)
     e2 = ema(e1, period)
@@ -959,7 +1654,24 @@ def dema(series: pd.Series, period: int = 20) -> pd.Series:
 # ==========================
 
 def tema(series: pd.Series, period: int = 20) -> pd.Series:
-    """TEMA = 3*EMA1 - 3*EMA2 + EMA3."""
+    """TEMA — 3×EMA1 − 3×EMA2 + EMA3.
+
+    Resumo
+    - Combinação de três EMAs para reduzir atraso mantendo suavização.
+
+    Parâmetros
+    - series: pandas.Series de preços.
+    - period: int, período das EMAs.
+
+    Retorna
+    - pandas.Series com TEMA.
+
+    Sinônimos/AKA
+    - Triple Exponential Moving Average.
+
+    Tags
+    - média móvel, suavização, atraso, EMA, TEMA
+    """
     series = _validate_series(series, "series")
     e1 = ema(series, period)
     e2 = ema(e1, period)
@@ -972,7 +1684,24 @@ def tema(series: pd.Series, period: int = 20) -> pd.Series:
 # ==========================
 
 def trima(series: pd.Series, period: int = 20) -> pd.Series:
-    """Triangular Moving Average via SMA dupla com janelas ajustadas."""
+    """TRIMA — Média Móvel Triangular via dupla SMA.
+
+    Resumo
+    - Suavização triangular obtida por média de médias (SMA de SMA).
+
+    Parâmetros
+    - series: pandas.Series de preços.
+    - period: int, janela efetiva.
+
+    Retorna
+    - pandas.Series com TRIMA.
+
+    Sinônimos/AKA
+    - Triangular Moving Average.
+
+    Tags
+    - média móvel, suavização, SMA, triangular, TRIMA
+    """
     series = _validate_series(series, "series")
     if period <= 1:
         return series.copy()
@@ -986,7 +1715,24 @@ def trima(series: pd.Series, period: int = 20) -> pd.Series:
 # ==========================
 
 def cmo(close: pd.Series, period: int = 14) -> pd.Series:
-    """CMO = 100*(sum(ups) - sum(downs)) / (sum(ups) + sum(downs))."""
+    """CMO — 100×(Σ ganhos − Σ perdas) / (Σ ganhos + Σ perdas).
+
+    Resumo
+    - Oscilador de momentum semelhante ao RSI, sensível a variações recentes.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - period: int, janela do cálculo.
+
+    Retorna
+    - pandas.Series com CMO (−100 a 100).
+
+    Sinônimos/AKA
+    - Chande Momentum Oscillator.
+
+    Tags
+    - oscilador, momentum, ganhos/perdas, CMO
+    """
     close = _validate_series(close, "close")
     delta = close.diff()
     up = delta.clip(lower=0.0)
@@ -1001,7 +1747,21 @@ def cmo(close: pd.Series, period: int = 14) -> pd.Series:
 # ==========================
 
 def fisher_transform(series: pd.Series, period: int = 9) -> pd.Series:
-    """Ehlers Fisher Transform em série normalizada por HH/LL."""
+    """Fisher Transform — Ehlers, em série normalizada por HH/LL.
+
+    Resumo
+    - Transforma a série em aproximadamente gaussiana para realçar reversões.
+
+    Parâmetros
+    - series: pandas.Series a transformar.
+    - period: int, janela para normalização por HH/LL.
+
+    Retorna
+    - pandas.Series com a transformação de Fisher.
+
+    Tags
+    - reversão, Ehlers, normalização, gaussiana, Fisher
+    """
     series = _validate_series(series, "series")
     highest = series.rolling(period).max()
     lowest = series.rolling(period).min()
@@ -1023,7 +1783,22 @@ def fisher_transform(series: pd.Series, period: int = 9) -> pd.Series:
 # ==========================
 
 def coppock_curve(close: pd.Series, roc1: int = 14, roc2: int = 11, wma_period: int = 10) -> pd.Series:
-    """Coppock = WMA(ROC(roc1, %) + ROC(roc2, %), wma_period)."""
+    """Coppock — WMA(ROC(roc1, %) + ROC(roc2, %), wma_period).
+
+    Resumo
+    - Indicador de longo prazo baseado na soma de ROCs suavizada por WMA.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - roc1, roc2: int, períodos dos ROCs percentuais.
+    - wma_period: int, período da WMA.
+
+    Retorna
+    - pandas.Series com Coppock Curve.
+
+    Tags
+    - longo prazo, momentum, WMA, ROC, Coppock
+    """
     close = _validate_series(close, "close")
     r1 = roc(close, roc1, as_percent=True)
     r2 = roc(close, roc2, as_percent=True)
@@ -1035,7 +1810,23 @@ def coppock_curve(close: pd.Series, roc1: int = 14, roc2: int = 11, wma_period: 
 # ==========================
 
 def connors_rsi(close: pd.Series, rsi_period: int = 3, streak_rsi_period: int = 2, pr_period: int = 100) -> pd.Series:
-    """Connors RSI = média de RSI(close,rsi_period), RSI(streak,streak_rsi_period) e PercentRank(ROC1, pr_period)."""
+    """Connors RSI — média de: RSI(close), RSI(streak) e PercentRank(ROC1).
+
+    Resumo
+    - Combina três componentes para capturar momentum de curto prazo.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - rsi_period: int, período do RSI de preço.
+    - streak_rsi_period: int, período do RSI do streak.
+    - pr_period: int, janela do PercentRank do ROC(1).
+
+    Retorna
+    - pandas.Series com Connors RSI (0–100).
+
+    Tags
+    - curto prazo, momentum, percent rank, streak, RSI, CRSI
+    """
     close = _validate_series(close, "close")
     rsi1 = rsi(close, rsi_period)
     # streak de ganhos/perdas consecutivos
@@ -1066,7 +1857,23 @@ def connors_rsi(close: pd.Series, rsi_period: int = 3, streak_rsi_period: int = 
 # ==========================
 
 def smi(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14, smoothing: int = 3, signal: int = 3) -> pd.DataFrame:
-    """SMI com linha de sinal."""
+    """SMI — Índice de Momentum Estocástico, com linha de sinal.
+
+    Resumo
+    - Versão centralizada do estocástico; usa duas EMAs para suavização.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, janela base.
+    - smoothing: int, suavização dupla (EMA).
+    - signal: int, SMA para linha de sinal.
+
+    Retorna
+    - pandas.DataFrame com colunas: smi, smi_signal.
+
+    Tags
+    - oscilador, momentum, suavização, estocástico, SMI
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -1086,7 +1893,24 @@ def smi(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14, smo
 # ==========================
 
 def rvi(open_: pd.Series, high: pd.Series, low: pd.Series, close: pd.Series, period: int = 10) -> pd.Series:
-    """RVI simplificado: SMA(close-open)/SMA(high-low)."""
+    """RVI (simplificado) — SMA(close − open) / SMA(high − low).
+
+    Resumo
+    - Mede vigor relativo do movimento considerando variação intrabarra.
+
+    Parâmetros
+    - open_, high, low, close: pandas.Series OHLC.
+    - period: int, janela da SMA.
+
+    Retorna
+    - pandas.Series com RVI.
+
+    Sinônimos/AKA
+    - Relative Vigor Index (simplificado).
+
+    Tags
+    - vigor, intrabarra, SMA, momentum, RVI
+    """
     open_ = _validate_series(open_, "open")
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
@@ -1101,8 +1925,22 @@ def rvi(open_: pd.Series, high: pd.Series, low: pd.Series, close: pd.Series, per
 # ==========================
 
 def alligator(high: pd.Series, low: pd.Series) -> pd.DataFrame:
-    """Alligator de Bill Williams usando SMMA aproximada por suavização de Wilder sobre preço mediano.
-    Jaw = SMMA(13) deslocado 8; Teeth = SMMA(8) deslocado 5; Lips = SMMA(5) deslocado 3.
+    """Alligator (Bill Williams) — Jaw, Teeth e Lips.
+
+    Resumo
+    - Três médias suavizadas (SMMA/Wilder) do preço mediano, deslocadas no tempo.
+
+    Parâmetros
+    - high, low: pandas.Series de máximas e mínimas.
+
+    Retorna
+    - pandas.DataFrame com colunas: alligator_jaw, alligator_teeth, alligator_lips.
+
+    Tags
+    - tendência, suavização, SMMA, Bill Williams, Alligator
+
+    Notas
+    - Jaw = SMMA(13) deslocado 8; Teeth = SMMA(8) deslocado 5; Lips = SMMA(5) deslocado 3.
     """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
@@ -1118,7 +1956,20 @@ def alligator(high: pd.Series, low: pd.Series) -> pd.DataFrame:
 # ==========================
 
 def gator_oscillator(high: pd.Series, low: pd.Series) -> pd.DataFrame:
-    """Gator Oscillator: |Jaw-Teeth| e |Teeth-Lips| baseado no Alligator."""
+    """Gator Oscillator — |Jaw − Teeth| e |Teeth − Lips|, baseado no Alligator.
+
+    Resumo
+    - Mede divergência/convergência entre as linhas do Alligator.
+
+    Parâmetros
+    - high, low: pandas.Series de máximas e mínimas.
+
+    Retorna
+    - pandas.DataFrame com colunas: gator_upper, gator_lower.
+
+    Tags
+    - tendência, convergência, divergência, Alligator, Gator
+    """
     alli = alligator(high, low)
     upper = (alli["alligator_jaw"] - alli["alligator_teeth"]).abs()
     lower = (alli["alligator_teeth"] - alli["alligator_lips"]).abs()
@@ -1130,7 +1981,20 @@ def gator_oscillator(high: pd.Series, low: pd.Series) -> pd.DataFrame:
 # ==========================
 
 def fractals(high: pd.Series, low: pd.Series) -> pd.DataFrame:
-    """Fractais: pontos onde high/low central é extremo em janela de 5 barras."""
+    """Fractais — pontos locais de alta/baixa (janela de 5 barras).
+
+    Resumo
+    - Marca fractais quando a barra central é extremo local comparado às vizinhas.
+
+    Parâmetros
+    - high, low: pandas.Series de máximas e mínimas.
+
+    Retorna
+    - pandas.DataFrame com colunas booleanas: fractal_up, fractal_down.
+
+    Tags
+    - fractal, extremos, Bill Williams, sinais, pivôs
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     up = (high.shift(2) < high.shift(0)) & (high.shift(1) < high.shift(0)) & (high.shift(-1) < high.shift(0)) & (high.shift(-2) < high.shift(0))
@@ -1143,7 +2007,22 @@ def fractals(high: pd.Series, low: pd.Series) -> pd.DataFrame:
 # ==========================
 
 def bollinger_percent_b(close: pd.Series, period: int = 20, num_std: float = 2.0) -> pd.Series:
-    """%B = (close - lower) / (upper - lower)."""
+    """%B — (close − lower) / (upper − lower).
+
+    Resumo
+    - Normaliza o preço dentro das bandas de Bollinger (0 = banda inferior, 1 = superior).
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - period: int, janela das bandas.
+    - num_std: float, multiplicador do desvio-padrão.
+
+    Retorna
+    - pandas.Series com %B.
+
+    Tags
+    - Bollinger, normalização, faixas, volatilidade, %B
+    """
     bands = bollinger_bands(close, period, num_std)
     upper = bands["bb_upper"]
     lower = bands["bb_lower"]
@@ -1155,7 +2034,22 @@ def bollinger_percent_b(close: pd.Series, period: int = 20, num_std: float = 2.0
 # ==========================
 
 def bollinger_bandwidth(close: pd.Series, period: int = 20, num_std: float = 2.0) -> pd.Series:
-    """Bandwidth = (upper - lower) / middle."""
+    """Largura de Bollinger — (upper − lower) / middle.
+
+    Resumo
+    - Mede a largura relativa das bandas como proxy de volatilidade.
+
+    Parâmetros
+    - close: pandas.Series de fechamento.
+    - period: int, janela das bandas.
+    - num_std: float, multiplicador do desvio-padrão.
+
+    Retorna
+    - pandas.Series com largura relativa (sem unidade).
+
+    Tags
+    - Bollinger, largura, volatilidade, faixas, bandwidth
+    """
     bands = bollinger_bands(close, period, num_std)
     return (bands["bb_upper"] - bands["bb_lower"]) / bands["bb_mid"].replace(0.0, np.nan)
 
@@ -1165,7 +2059,22 @@ def bollinger_bandwidth(close: pd.Series, period: int = 20, num_std: float = 2.0
 # ==========================
 
 def chandelier_exit(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 22, multiplier: float = 3.0) -> pd.DataFrame:
-    """Chandelier Exit longo e curto."""
+    """Chandelier Exit — níveis de saída para posições longas e curtas.
+
+    Resumo
+    - Stops baseados em extremos recentes ajustados por ATR.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - period: int, janela para HH/LL.
+    - multiplier: float, multiplicador do ATR.
+
+    Retorna
+    - pandas.DataFrame com colunas: chandelier_long, chandelier_short.
+
+    Tags
+    - stop, ATR, extremos, risco, chandelier
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -1182,7 +2091,26 @@ def chandelier_exit(high: pd.Series, low: pd.Series, close: pd.Series, period: i
 # ==========================
 
 def kvo(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, fast: int = 34, slow: int = 55, signal: int = 13) -> pd.DataFrame:
-    """Klinger Volume Oscillator: EMA(VF, fast) - EMA(VF, slow) e sinal."""
+    """KVO — Oscilador de Volume de Klinger (simplificado).
+
+    Resumo
+    - Oscilador de volume a partir do Volume Force (VF), com linha de sinal.
+
+    Parâmetros
+    - high, low, close: pandas.Series OHLC.
+    - volume: pandas.Series de volume.
+    - fast, slow: int, períodos das EMAs.
+    - signal: int, período da EMA de sinal.
+
+    Retorna
+    - pandas.DataFrame com colunas: kvo, kvo_signal.
+
+    Sinônimos/AKA
+    - Klinger Volume Oscillator.
+
+    Tags
+    - volume, momentum, EMAs, VF, Klinger, KVO
+    """
     high = _validate_series(high, "high")
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
@@ -1202,7 +2130,22 @@ def kvo(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, fa
 # ==========================
 
 def ma_envelopes(series: pd.Series, period: int = 20, percent: float = 0.025) -> pd.DataFrame:
-    """Envelopes em torno de SMA: upper/lower = SMA*(1±percent)."""
+    """Envelopes de SMA — upper/lower = SMA × (1 ± percent).
+
+    Resumo
+    - Faixas percentuais em torno de uma SMA para detectar rompimentos/retornos.
+
+    Parâmetros
+    - series: pandas.Series de preços.
+    - period: int, período da SMA central.
+    - percent: float, largura percentual (ex.: 0.025 = 2.5%).
+
+    Retorna
+    - pandas.DataFrame com colunas: ma_env_mid, ma_env_upper, ma_env_lower.
+
+    Tags
+    - envelopes, SMA, faixas, ruptura, retorno
+    """
     series = _validate_series(series, "series")
     mid = sma(series, period)
     upper = mid * (1 + percent)
@@ -1215,7 +2158,21 @@ def ma_envelopes(series: pd.Series, period: int = 20, percent: float = 0.025) ->
 # ==========================
 
 def ulcer_index(series: pd.Series, period: int = 14) -> pd.Series:
-    """Ulcer Index baseado nos drawdowns percentuais."""
+    """Ulcer Index — baseado em drawdowns percentuais.
+
+    Resumo
+    - Mede profundidade e duração de quedas abaixo do máximo recente.
+
+    Parâmetros
+    - series: pandas.Series de preços.
+    - period: int, janela de cálculo.
+
+    Retorna
+    - pandas.Series com Ulcer Index.
+
+    Tags
+    - risco, drawdown, volatilidade, Ulcer Index
+    """
     series = _validate_series(series, "series")
     rolling_max = series.rolling(period, min_periods=period).max()
     drawdown = 100 * (series - rolling_max) / rolling_max
@@ -1227,7 +2184,21 @@ def ulcer_index(series: pd.Series, period: int = 14) -> pd.Series:
 # ==========================
 
 def zscore(series: pd.Series, period: int = 20) -> pd.Series:
-    """Z-Score = (series - SMA) / STD."""
+    """Z-Score — (series − SMA) / STD.
+
+    Resumo
+    - Padroniza a série em desvios-padrão em relação à média móvel.
+
+    Parâmetros
+    - series: pandas.Series de preços.
+    - period: int, janela da SMA/STD.
+
+    Retorna
+    - pandas.Series com z-score.
+
+    Tags
+    - padronização, desvio-padrão, anomalias, estatística, zscore
+    """
     series = _validate_series(series, "series")
     mean = sma(series, period)
     std = series.rolling(period, min_periods=period).std(ddof=0)
