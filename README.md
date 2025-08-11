@@ -154,3 +154,14 @@ Isso irá salvar `examples/indicators_output.csv` com todas as colunas calculada
 59. Moving Average Envelopes
 60. Ulcer Index
 61. Z-Score do preço
+
+## Notebook de visualização e mini backtest
+
+Um notebook foi criado em `notebooks/forex_visualizations_v2.ipynb` que:
+- Carrega EURUSD via `yfinance` (se disponível) ou gera dados sintéticos.
+- Plota EMA(20/50), Bandas de Bollinger, Keltner, Supertrend, ADX, ATR e outros.
+- Executa dois mini backtests: cruzamento de médias (EMA 20/50) e Supertrend.
+
+Como abrir:
+- No seu ambiente com Jupyter/VS Code, abra `notebooks/forex_visualizations_v2.ipynb`.
+- Se não tiver `yfinance`, o notebook usará dados sintéticos automaticamente.
