@@ -89,13 +89,36 @@ Isso aumenta a interoperabilidade sem exigir renomeações manuais.
 
 Abra em seu ambiente Jupyter/VS Code. Se `yfinance` não estiver instalado, o notebook usará dados sintéticos.
 
+## Roleta com indicadores Forex
+
+Adicionamos utilitários para aplicar indicadores técnicos de Forex a sequências de giros de roleta (europeia):
+
+- Conversão de giros para séries de preço/`OHLCV` sintético (`roulette_indicators/fx_adapter.py`)
+- Pipeline de avaliação walk-forward usando indicadores como sinal preditivo para as tarefas: `cores` (R/B), `altos/baixos` (H/L), `dúzias` (D1/D2/D3) e `colunas` (C1/C2/C3) (`roulette_indicators/fx_predict.py`)
+- Geração de dados sintéticos de giros (`roulette_indicators/synthetic.py`)
+
+Uso rápido:
+
+```bash
+python examples/roulette_example.py
+```
+
+Isso gera `examples/outputs/roulette_performance.csv` com um sumário de acurácia.
+
+Em dados sintéticos IID (roleta justa), a acurácia esperada fica próxima das probabilidades-base:
+
+- Cores e Altos/Baixos: ~ 18/37 ≈ 0.486
+- Dúzias e Colunas: ~ 12/37 ≈ 0.324
+
+Nos nossos testes com 20k giros sintéticos e janelas [20, 50, 100], a média por tarefa ficou dentro de ±0.03 desses baselines. Isso é esperado, pois não há padrão real em dados IID. Em séries reais (com possíveis vieses), você pode repetir o mesmo pipeline para medir se algum indicador apresenta vantagem estatística.
+
 ## Testes
 
 ```bash
-python -m pytest -q
+python3 -m unittest -q
 ```
 
-Os testes cobrem a correção básica das fórmulas e a integridade das saídas. Contribuições com novos testes são bem-vindas.
+Os testes cobrem fórmulas dos indicadores e os módulos de roleta, incluindo o pipeline Forex→Roleta. Contribuições com novos testes são bem-vindas.
 
 ## Boas práticas e performance
 

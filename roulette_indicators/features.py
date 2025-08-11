@@ -117,6 +117,6 @@ def rolling_category_frequencies(spins: pd.Series, task: str, window: int) -> pd
 
 def predict_next_by_rolling_frequency(spins: pd.Series, task: str, window: int) -> pd.Series:
     freqs = rolling_category_frequencies(spins, task, window)
-    # Escolhe a categoria com maior frequência nas últimas 'window' observações
-    pred = freqs.idxmax(axis=1)
+    # Prever rótulo em t usando apenas histórico até t-1
+    pred = freqs.shift(1).idxmax(axis=1)
     return pred
