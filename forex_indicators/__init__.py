@@ -60,6 +60,7 @@ from .indicators import (
     ma_envelopes,
     ulcer_index,
     zscore,
+    normalize_ohlcv,
 )
 
 __all__ = [
@@ -127,4 +128,5 @@ __all__ += [
     "ma_envelopes",
     "ulcer_index",
     "zscore",
+    "normalize_ohlcv",
 ]

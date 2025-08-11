@@ -12,14 +12,74 @@ import pandas as pd
 # ==========================
 
 def _validate_series(series: pd.Series, name: str) -> pd.Series:
+    # Aceita pandas.Series diretamente; para arrays/listas, converte para Series
     if not isinstance(series, pd.Series):
-        raise TypeError(f"{name} deve ser um pandas.Series")
-    return series.astype(float)
+        if isinstance(series, (np.ndarray, list, tuple, pd.Index)):
+            series = pd.Series(series)
+        else:
+            raise TypeError(f"{name} deve ser um pandas.Series ou array-like")
+    try:
+        return series.astype(float)
+    except Exception as exc:
+        raise TypeError(f"{name} não pôde ser convertido para float: {exc}")
+
+
+def normalize_ohlcv(df_like: pd.DataFrame) -> pd.DataFrame:
+    """Normaliza nomes de colunas para open/high/low/close/volume.
+
+    - Aceita variações comuns de provedores (ex.: Close, Adj Close, VOL, etc.)
+    - Mantém colunas extras intactas
+    - Se existir apenas 'adj close', cria 'close' a partir dela
+    """
+    if not isinstance(df_like, pd.DataFrame):
+        raise TypeError("Entrada deve ser um pandas.DataFrame")
+
+    df = df_like.copy()
+
+    def _canon(name: str) -> str:
+        name = name.lower()
+        # remove caracteres não alfanuméricos para facilitar matching
+        return "".join(ch for ch in name if ch.isalnum())
+
+    targets_to_aliases = {
+        "open": {"open", "o", "op", "openingprice"},
+        "high": {"high", "h", "hi"},
+        "low": {"low", "l", "lo"},
+        "close": {"close", "c", "cl", "last", "price", "adjclose"},
+        "volume": {"volume", "vol", "v", "qty", "quantity"},
+    }
+
+    alias_to_target = {}
+    for target, aliases in targets_to_aliases.items():
+        for alias in aliases:
+            alias_to_target[alias] = target
+
+    rename_map: dict[str, str] = {}
+    for col in df.columns:
+        canon = _canon(str(col))
+        if canon in alias_to_target:
+            rename_map[col] = alias_to_target[canon]
+
+    if rename_map:
+        df = df.rename(columns=rename_map)
+
+    # Se houver apenas adj close mapeado para 'close', já estará coberto.
+    # Garante nomes em minúsculas para consistência
+    df = df.rename(columns=lambda c: str(c).lower())
+
+    # Caso 'close' não exista mas 'adj close' exista (não mapeado por algum motivo)
+    if "close" not in df.columns:
+        for c in list(df.columns):
+            if _canon(c) == "adjclose":
+                df["close"] = df[c]
+                break
+
+    return df
 
 
 def _validate_ohlcv(df_like, required=("high", "low", "close")) -> pd.DataFrame:
     if isinstance(df_like, pd.DataFrame):
-        df = df_like.copy()
+        df = normalize_ohlcv(df_like)
     else:
         raise TypeError("Entrada deve ser um pandas.DataFrame com colunas open, high, low, close, volume")
 
@@ -28,9 +88,6 @@ def _validate_ohlcv(df_like, required=("high", "low", "close")) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Faltam colunas obrigatórias: {missing}")
 
-    # Normaliza nomes para minúsculas
-    rename_map = {c: c.lower() for c in df.columns}
-    df = df.rename(columns=rename_map)
     return df
 
 
