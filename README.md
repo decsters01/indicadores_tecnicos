@@ -2,6 +2,14 @@
 
 Biblioteca simples e transparente (pandas/numpy) com uma coleção abrangente de indicadores técnicos usados no mercado Forex. Foco em clareza, compatibilidade com `pandas.Series/DataFrame` e API estável.
 
+## Visão do projeto
+
+- **Mais completo que bibliotecas populares (ex.: pandas-ta)**: nossa ambição é cobrir um conjunto amplo e coerente de indicadores, com API estável, validações explícitas e docstrings em português que facilitam busca semântica.
+- **Independência do MetaTrader**: reproduza, estenda e combine indicadores nativamente em Python, sem depender de MT4/MT5. Ideal para fluxos de análise de dados e pesquisa quantitativa.
+- **Código simples e transparente**: implementações diretas com `pandas`/`numpy`, priorizando legibilidade e reprodutibilidade para estudos, protótipos e produção.
+- **Open source de verdade**: uma base de código aberta, clara e extensível — convidamos a comunidade a evoluir o ecossistema de indicadores com qualidade e testes.
+- **Para análise de mercado e trading quantitativo**: pensado para pipelines de dados, notebooks, backtests e integrações com bibliotecas de modelagem/ML.
+
 ## Instalação
 
 ```bash
