@@ -511,13 +511,13 @@ def supertrend(
     lower_band = lower_band_basic.copy()
 
     for i in range(1, len(close)):
-        if not np.isnan(upper_band[i - 1]):
+        if not np.isnan(upper_band.iat[i - 1]):
             upper_band.iat[i] = (
                 upper_band_basic.iat[i]
                 if (upper_band_basic.iat[i] < upper_band.iat[i - 1]) or (close.iat[i - 1] > upper_band.iat[i - 1])
                 else upper_band.iat[i - 1]
             )
-        if not np.isnan(lower_band[i - 1]):
+        if not np.isnan(lower_band.iat[i - 1]):
             lower_band.iat[i] = (
                 lower_band_basic.iat[i]
                 if (lower_band_basic.iat[i] > lower_band.iat[i - 1]) or (close.iat[i - 1] < lower_band.iat[i - 1])
@@ -534,7 +534,7 @@ def supertrend(
             continue
         prev_line = supertrend_line.iat[i - 1]
         prev_trend = trend.iat[i - 1]
-        if prev_line is np.nan:
+        if pd.isna(prev_line):
             prev_line = upper_band.iat[i - 1]
             prev_trend = 1.0
         if close.iat[i] > upper_band.iat[i - 1]:
@@ -866,3 +866,312 @@ def bop(open_: pd.Series, high: pd.Series, low: pd.Series, close: pd.Series) -> 
     low = _validate_series(low, "low")
     close = _validate_series(close, "close")
     return (close - open_) / (high - low).replace(0.0, np.nan)
+
+
+# ==========================
+# 41) HMA - Hull Moving Average
+# ==========================
+
+def hma(series: pd.Series, period: int = 20) -> pd.Series:
+    """Hull Moving Average."""
+    series = _validate_series(series, "series")
+    if period <= 1:
+        return series.copy()
+    half = max(int(period / 2), 1)
+    sqrt_p = max(int(np.sqrt(period)), 1)
+    wma_full = wma(series, period)
+    wma_half = wma(series, half)
+    diff = 2 * wma_half - wma_full
+    return wma(diff, sqrt_p)
+
+
+# ==========================
+# 42) DEMA - Double Exponential Moving Average
+# ==========================
+
+def dema(series: pd.Series, period: int = 20) -> pd.Series:
+    """DEMA = 2*EMA - EMA(EMA)."""
+    series = _validate_series(series, "series")
+    e1 = ema(series, period)
+    e2 = ema(e1, period)
+    return 2 * e1 - e2
+
+
+# ==========================
+# 43) TEMA - Triple Exponential Moving Average
+# ==========================
+
+def tema(series: pd.Series, period: int = 20) -> pd.Series:
+    """TEMA = 3*EMA1 - 3*EMA2 + EMA3."""
+    series = _validate_series(series, "series")
+    e1 = ema(series, period)
+    e2 = ema(e1, period)
+    e3 = ema(e2, period)
+    return 3 * e1 - 3 * e2 + e3
+
+
+# ==========================
+# 44) TRIMA - Triangular Moving Average
+# ==========================
+
+def trima(series: pd.Series, period: int = 20) -> pd.Series:
+    """Triangular Moving Average via SMA dupla com janelas ajustadas."""
+    series = _validate_series(series, "series")
+    if period <= 1:
+        return series.copy()
+    p1 = (period + 1) // 2
+    p2 = period - p1 + 1
+    return sma(sma(series, p1), p2)
+
+
+# ==========================
+# 45) CMO - Chande Momentum Oscillator
+# ==========================
+
+def cmo(close: pd.Series, period: int = 14) -> pd.Series:
+    """CMO = 100*(sum(ups) - sum(downs)) / (sum(ups) + sum(downs))."""
+    close = _validate_series(close, "close")
+    delta = close.diff()
+    up = delta.clip(lower=0.0)
+    down = -delta.clip(upper=0.0)
+    sum_up = up.rolling(period, min_periods=period).sum()
+    sum_down = down.rolling(period, min_periods=period).sum()
+    return 100 * (sum_up - sum_down) / (sum_up + sum_down)
+
+
+# ==========================
+# 46) Fisher Transform (Ehlers)
+# ==========================
+
+def fisher_transform(series: pd.Series, period: int = 9) -> pd.Series:
+    """Ehlers Fisher Transform em série normalizada por HH/LL."""
+    series = _validate_series(series, "series")
+    highest = series.rolling(period).max()
+    lowest = series.rolling(period).min()
+    x = 0.33 * 2 * ((series - lowest) / (highest - lowest) - 0.5)
+    x = x.replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    f = pd.Series(index=series.index, dtype=float)
+    prev_val = 0.0
+    for i in range(len(series)):
+        xi = x.iat[i]
+        xi = np.clip(xi * 0.67 + prev_val * 0.67, -0.999, 0.999)
+        fi = 0.5 * np.log((1 + xi) / (1 - xi))
+        f.iat[i] = fi
+        prev_val = xi
+    return f
+
+
+# ==========================
+# 47) Coppock Curve
+# ==========================
+
+def coppock_curve(close: pd.Series, roc1: int = 14, roc2: int = 11, wma_period: int = 10) -> pd.Series:
+    """Coppock = WMA(ROC(roc1, %) + ROC(roc2, %), wma_period)."""
+    close = _validate_series(close, "close")
+    r1 = roc(close, roc1, as_percent=True)
+    r2 = roc(close, roc2, as_percent=True)
+    return wma(r1 + r2, wma_period)
+
+
+# ==========================
+# 48) Connors RSI (CRSI)
+# ==========================
+
+def connors_rsi(close: pd.Series, rsi_period: int = 3, streak_rsi_period: int = 2, pr_period: int = 100) -> pd.Series:
+    """Connors RSI = média de RSI(close,rsi_period), RSI(streak,streak_rsi_period) e PercentRank(ROC1, pr_period)."""
+    close = _validate_series(close, "close")
+    rsi1 = rsi(close, rsi_period)
+    # streak de ganhos/perdas consecutivos
+    delta = close.diff()
+    streak = pd.Series(index=close.index, dtype=float)
+    streak.iat[0] = 0.0
+    for i in range(1, len(close)):
+        if delta.iat[i] > 0:
+            streak.iat[i] = max(0.0, streak.iat[i - 1]) + 1.0
+        elif delta.iat[i] < 0:
+            streak.iat[i] = min(0.0, streak.iat[i - 1]) - 1.0
+        else:
+            streak.iat[i] = 0.0
+    rsi2 = rsi(streak.fillna(0.0), streak_rsi_period)
+    roc1 = roc(close, 1, as_percent=False)
+
+    def percent_rank_window(x: np.ndarray) -> float:
+        last = x[-1]
+        rank = (x <= last).sum() - 1  # exclui o último
+        return 100 * rank / (len(x) - 1) if len(x) > 1 else np.nan
+
+    pr = roc1.rolling(pr_period, min_periods=pr_period).apply(percent_rank_window, raw=True)
+    return (rsi1 + rsi2 + pr) / 3.0
+
+
+# ==========================
+# 49) SMI - Stochastic Momentum Index
+# ==========================
+
+def smi(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14, smoothing: int = 3, signal: int = 3) -> pd.DataFrame:
+    """SMI com linha de sinal."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    hh = high.rolling(period).max()
+    ll = low.rolling(period).min()
+    m = (hh + ll) / 2.0
+    d = close - m
+    sd = ema(ema(d, smoothing), smoothing)
+    sr = ema(ema(hh - ll, smoothing), smoothing)
+    smi_val = 100 * (sd / (0.5 * sr).replace(0.0, np.nan))
+    signal_line = sma(smi_val, signal)
+    return pd.DataFrame({"smi": smi_val, "smi_signal": signal_line})
+
+
+# ==========================
+# 50) RVI - Relative Vigor Index (simplificado)
+# ==========================
+
+def rvi(open_: pd.Series, high: pd.Series, low: pd.Series, close: pd.Series, period: int = 10) -> pd.Series:
+    """RVI simplificado: SMA(close-open)/SMA(high-low)."""
+    open_ = _validate_series(open_, "open")
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    num = (close - open_).rolling(period).mean()
+    den = (high - low).rolling(period).mean()
+    return num / den.replace(0.0, np.nan)
+
+
+# ==========================
+# 51) Alligator (Jaw/Teeth/Lips)
+# ==========================
+
+def alligator(high: pd.Series, low: pd.Series) -> pd.DataFrame:
+    """Alligator de Bill Williams usando SMMA aproximada por suavização de Wilder sobre preço mediano.
+    Jaw = SMMA(13) deslocado 8; Teeth = SMMA(8) deslocado 5; Lips = SMMA(5) deslocado 3.
+    """
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    median = (high + low) / 2.0
+    jaw = _wilder_ema(median, 13).shift(8)
+    teeth = _wilder_ema(median, 8).shift(5)
+    lips = _wilder_ema(median, 5).shift(3)
+    return pd.DataFrame({"alligator_jaw": jaw, "alligator_teeth": teeth, "alligator_lips": lips})
+
+
+# ==========================
+# 52) Gator Oscillator
+# ==========================
+
+def gator_oscillator(high: pd.Series, low: pd.Series) -> pd.DataFrame:
+    """Gator Oscillator: |Jaw-Teeth| e |Teeth-Lips| baseado no Alligator."""
+    alli = alligator(high, low)
+    upper = (alli["alligator_jaw"] - alli["alligator_teeth"]).abs()
+    lower = (alli["alligator_teeth"] - alli["alligator_lips"]).abs()
+    return pd.DataFrame({"gator_upper": upper, "gator_lower": lower})
+
+
+# ==========================
+# 53) Fractals (Bill Williams)
+# ==========================
+
+def fractals(high: pd.Series, low: pd.Series) -> pd.DataFrame:
+    """Fractais: pontos onde high/low central é extremo em janela de 5 barras."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    up = (high.shift(2) < high.shift(0)) & (high.shift(1) < high.shift(0)) & (high.shift(-1) < high.shift(0)) & (high.shift(-2) < high.shift(0))
+    down = (low.shift(2) > low.shift(0)) & (low.shift(1) > low.shift(0)) & (low.shift(-1) > low.shift(0)) & (low.shift(-2) > low.shift(0))
+    return pd.DataFrame({"fractal_up": up.fillna(False), "fractal_down": down.fillna(False)})
+
+
+# ==========================
+# 54) Bollinger %B
+# ==========================
+
+def bollinger_percent_b(close: pd.Series, period: int = 20, num_std: float = 2.0) -> pd.Series:
+    """%B = (close - lower) / (upper - lower)."""
+    bands = bollinger_bands(close, period, num_std)
+    upper = bands["bb_upper"]
+    lower = bands["bb_lower"]
+    return (close - lower) / (upper - lower)
+
+
+# ==========================
+# 55) Bollinger Bandwidth
+# ==========================
+
+def bollinger_bandwidth(close: pd.Series, period: int = 20, num_std: float = 2.0) -> pd.Series:
+    """Bandwidth = (upper - lower) / middle."""
+    bands = bollinger_bands(close, period, num_std)
+    return (bands["bb_upper"] - bands["bb_lower"]) / bands["bb_mid"].replace(0.0, np.nan)
+
+
+# ==========================
+# 56) Chandelier Exit (long/short)
+# ==========================
+
+def chandelier_exit(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 22, multiplier: float = 3.0) -> pd.DataFrame:
+    """Chandelier Exit longo e curto."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    atr_val = atr(high, low, close, 22)
+    highest = high.rolling(period).max()
+    lowest = low.rolling(period).min()
+    long_exit = highest - multiplier * atr_val
+    short_exit = lowest + multiplier * atr_val
+    return pd.DataFrame({"chandelier_long": long_exit, "chandelier_short": short_exit})
+
+
+# ==========================
+# 57) KVO - Klinger Volume Oscillator (simplificado)
+# ==========================
+
+def kvo(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, fast: int = 34, slow: int = 55, signal: int = 13) -> pd.DataFrame:
+    """Klinger Volume Oscillator: EMA(VF, fast) - EMA(VF, slow) e sinal."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    volume = _validate_series(volume, "volume")
+    tp = (high + low + close)
+    dm = tp.diff()
+    trend = np.where(dm > 0, 1, np.where(dm < 0, -1, 0))
+    vf = trend * volume * (2 * (dm.abs() / (tp.shift(1) + tp)) - 1)
+    vf = pd.Series(vf, index=close.index).replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    line = ema(vf, fast) - ema(vf, slow)
+    sig = ema(line, signal)
+    return pd.DataFrame({"kvo": line, "kvo_signal": sig})
+
+
+# ==========================
+# 58) Moving Average Envelopes
+# ==========================
+
+def ma_envelopes(series: pd.Series, period: int = 20, percent: float = 0.025) -> pd.DataFrame:
+    """Envelopes em torno de SMA: upper/lower = SMA*(1±percent)."""
+    series = _validate_series(series, "series")
+    mid = sma(series, period)
+    upper = mid * (1 + percent)
+    lower = mid * (1 - percent)
+    return pd.DataFrame({"ma_env_mid": mid, "ma_env_upper": upper, "ma_env_lower": lower})
+
+
+# ==========================
+# 59) Ulcer Index
+# ==========================
+
+def ulcer_index(series: pd.Series, period: int = 14) -> pd.Series:
+    """Ulcer Index baseado nos drawdowns percentuais."""
+    series = _validate_series(series, "series")
+    rolling_max = series.rolling(period, min_periods=period).max()
+    drawdown = 100 * (series - rolling_max) / rolling_max
+    return np.sqrt((drawdown.pow(2)).rolling(period, min_periods=period).mean())
+
+
+# ==========================
+# 60) Z-Score do preço
+# ==========================
+
+def zscore(series: pd.Series, period: int = 20) -> pd.Series:
+    """Z-Score = (series - SMA) / STD."""
+    series = _validate_series(series, "series")
+    mean = sma(series, period)
+    std = series.rolling(period, min_periods=period).std(ddof=0)
+    return (series - mean) / std

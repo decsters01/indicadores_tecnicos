@@ -131,3 +131,26 @@ Isso irá salvar `examples/indicators_output.csv` com todas as colunas calculada
 - StochRSI: estocástico aplicado ao RSI
 - KST: somatória ponderada de ROCs suavizados
 - BOP: relação de força de fechamento vs abertura no range
+
+## +outros 20 indicadores
+
+42. HMA (Hull Moving Average)
+43. DEMA (Double EMA)
+44. TEMA (Triple EMA)
+45. TRIMA (Triangular MA)
+46. CMO (Chande Momentum Oscillator)
+47. Fisher Transform (Ehlers)
+48. Coppock Curve
+49. Connors RSI (CRSI)
+50. SMI (Stochastic Momentum Index)
+51. RVI (Relative Vigor Index)
+52. Alligator (Jaw/Teeth/Lips)
+53. Gator Oscillator
+54. Fractals (Bill Williams)
+55. Bollinger %B
+56. Bollinger Bandwidth
+57. Chandelier Exit (long/short)
+58. KVO (Klinger Volume Oscillator)
+59. Moving Average Envelopes
+60. Ulcer Index
+61. Z-Score do preço

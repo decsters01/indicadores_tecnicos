@@ -90,6 +90,28 @@ class TestIndicators(unittest.TestCase):
         self.assertFrameLike(kst(self.close), ["kst", "kst_signal"])
         self.assertSeriesLike(bop(self.open, self.high, self.low, self.close))
 
+    def test_more_20(self):
+        self.assertSeriesLike(hma(self.close))
+        self.assertSeriesLike(dema(self.close))
+        self.assertSeriesLike(tema(self.close))
+        self.assertSeriesLike(trima(self.close))
+        self.assertSeriesLike(cmo(self.close))
+        self.assertSeriesLike(fisher_transform(self.close))
+        self.assertSeriesLike(coppock_curve(self.close))
+        self.assertSeriesLike(connors_rsi(self.close))
+        self.assertFrameLike(smi(self.high, self.low, self.close), ["smi", "smi_signal"])
+        self.assertSeriesLike(rvi(self.open, self.high, self.low, self.close))
+        self.assertFrameLike(alligator(self.high, self.low), ["alligator_jaw", "alligator_teeth", "alligator_lips"])
+        self.assertFrameLike(gator_oscillator(self.high, self.low), ["gator_upper", "gator_lower"])
+        self.assertFrameLike(fractals(self.high, self.low), ["fractal_up", "fractal_down"])
+        self.assertSeriesLike(bollinger_percent_b(self.close))
+        self.assertSeriesLike(bollinger_bandwidth(self.close))
+        self.assertFrameLike(chandelier_exit(self.high, self.low, self.close), ["chandelier_long", "chandelier_short"])
+        self.assertFrameLike(kvo(self.high, self.low, self.close, self.volume), ["kvo", "kvo_signal"])
+        self.assertFrameLike(ma_envelopes(self.close), ["ma_env_mid", "ma_env_upper", "ma_env_lower"])
+        self.assertSeriesLike(ulcer_index(self.close))
+        self.assertSeriesLike(zscore(self.close))
+
 
 if __name__ == "__main__":
     unittest.main()
