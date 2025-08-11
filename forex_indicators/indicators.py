@@ -461,3 +461,408 @@ def donchian_channels(high: pd.Series, low: pd.Series, period: int = 20) -> pd.D
     lower = low.rolling(window=period, min_periods=period).min()
     middle = (upper + lower) / 2.0
     return pd.DataFrame({"donchian_upper": upper, "donchian_lower": lower, "donchian_mid": middle})
+
+
+# ==========================
+# 21) Keltner Channels
+# ==========================
+
+def keltner_channels(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 20,
+    atr_period: int = 10,
+    multiplier: float = 2.0,
+) -> pd.DataFrame:
+    """Keltner Channels: média EMA(close, period) ± multiplier * ATR(atr_period)."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    mid = ema(close, period)
+    atr_val = atr(high, low, close, atr_period)
+    upper = mid + multiplier * atr_val
+    lower = mid - multiplier * atr_val
+    return pd.DataFrame({"kc_mid": mid, "kc_upper": upper, "kc_lower": lower})
+
+
+# ==========================
+# 22) Supertrend
+# ==========================
+
+def supertrend(
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    period: int = 10,
+    multiplier: float = 3.0,
+) -> pd.DataFrame:
+    """Supertrend indicador: retorna linhas de tendência e sinal (+1/-1)."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+
+    atr_val = atr(high, low, close, period)
+    hl2 = (high + low) / 2.0
+    upper_band_basic = hl2 + multiplier * atr_val
+    lower_band_basic = hl2 - multiplier * atr_val
+
+    upper_band = upper_band_basic.copy()
+    lower_band = lower_band_basic.copy()
+
+    for i in range(1, len(close)):
+        if not np.isnan(upper_band[i - 1]):
+            upper_band.iat[i] = (
+                upper_band_basic.iat[i]
+                if (upper_band_basic.iat[i] < upper_band.iat[i - 1]) or (close.iat[i - 1] > upper_band.iat[i - 1])
+                else upper_band.iat[i - 1]
+            )
+        if not np.isnan(lower_band[i - 1]):
+            lower_band.iat[i] = (
+                lower_band_basic.iat[i]
+                if (lower_band_basic.iat[i] > lower_band.iat[i - 1]) or (close.iat[i - 1] < lower_band.iat[i - 1])
+                else lower_band.iat[i - 1]
+            )
+
+    supertrend_line = pd.Series(index=close.index, dtype=float)
+    trend = pd.Series(index=close.index, dtype=float)
+
+    for i in range(len(close)):
+        if i == 0:
+            supertrend_line.iat[i] = np.nan
+            trend.iat[i] = 1.0
+            continue
+        prev_line = supertrend_line.iat[i - 1]
+        prev_trend = trend.iat[i - 1]
+        if prev_line is np.nan:
+            prev_line = upper_band.iat[i - 1]
+            prev_trend = 1.0
+        if close.iat[i] > upper_band.iat[i - 1]:
+            supertrend_line.iat[i] = lower_band.iat[i]
+            trend.iat[i] = 1.0
+        elif close.iat[i] < lower_band.iat[i - 1]:
+            supertrend_line.iat[i] = upper_band.iat[i]
+            trend.iat[i] = -1.0
+        else:
+            supertrend_line.iat[i] = prev_line
+            trend.iat[i] = prev_trend
+            if (prev_trend == 1.0) and (lower_band.iat[i] > prev_line):
+                supertrend_line.iat[i] = lower_band.iat[i]
+            if (prev_trend == -1.0) and (upper_band.iat[i] < prev_line):
+                supertrend_line.iat[i] = upper_band.iat[i]
+
+    return pd.DataFrame({
+        "supertrend": supertrend_line,
+        "supertrend_trend": trend,
+        "supertrend_upper": upper_band,
+        "supertrend_lower": lower_band,
+    })
+
+
+# ==========================
+# 23) PPO - Percentage Price Oscillator
+# ==========================
+
+def ppo(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
+    """PPO, sua linha de sinal e histograma."""
+    close = _validate_series(close, "close")
+    ema_fast = ema(close, fast)
+    ema_slow = ema(close, slow)
+    ppo_line = 100 * (ema_fast - ema_slow) / ema_slow.replace(0.0, np.nan)
+    signal_line = ema(ppo_line, signal)
+    hist = ppo_line - signal_line
+    return pd.DataFrame({"ppo": ppo_line, "ppo_signal": signal_line, "ppo_hist": hist})
+
+
+# ==========================
+# 24) KAMA - Kaufman Adaptive Moving Average
+# ==========================
+
+def kama(
+    series: pd.Series,
+    er_period: int = 10,
+    fast_period: int = 2,
+    slow_period: int = 30,
+) -> pd.Series:
+    """Kaufman Adaptive Moving Average."""
+    series = _validate_series(series, "series")
+    change = series.diff(er_period).abs()
+    volatility = series.diff().abs().rolling(er_period).sum()
+    er = change / volatility.replace(0.0, np.nan)
+
+    fast_sc = 2 / (fast_period + 1)
+    slow_sc = 2 / (slow_period + 1)
+    sc = (er * (fast_sc - slow_sc) + slow_sc) ** 2
+
+    kama_vals = pd.Series(index=series.index, dtype=float)
+    for i, idx in enumerate(series.index):
+        if i == 0:
+            kama_vals.iat[i] = series.iat[i]
+        else:
+            kama_vals.iat[i] = kama_vals.iat[i - 1] + sc.iat[i] * (series.iat[i] - kama_vals.iat[i - 1])
+    return kama_vals
+
+
+# ==========================
+# 25) TSI - True Strength Index
+# ==========================
+
+def tsi(close: pd.Series, long: int = 25, short: int = 13) -> pd.Series:
+    """True Strength Index."""
+    close = _validate_series(close, "close")
+    momentum = close.diff()
+    ema1 = ema(momentum.fillna(0.0), long)
+    ema2 = ema(ema1, short)
+    ema1_abs = ema(momentum.abs().fillna(0.0), long)
+    ema2_abs = ema(ema1_abs, short)
+    return 100 * (ema2 / ema2_abs.replace(0.0, np.nan))
+
+
+# ==========================
+# 26) DPO - Detrended Price Oscillator
+# ==========================
+
+def dpo(close: pd.Series, period: int = 20) -> pd.Series:
+    """DPO: close deslocado menos SMA(period)"""
+    close = _validate_series(close, "close")
+    shift = int(period / 2) + 1
+    return close.shift(shift) - sma(close, period)
+
+
+# ==========================
+# 27) Aroon (Up, Down, Osc)
+# ==========================
+
+def aroon(high: pd.Series, low: pd.Series, period: int = 25) -> pd.DataFrame:
+    """Aroon Up/Down e Oscillator."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+
+    def _last_idx_of_max(x: np.ndarray) -> int:
+        return int(np.argmax(x))
+
+    def _last_idx_of_min(x: np.ndarray) -> int:
+        return int(np.argmin(x))
+
+    rolling_high_idx = high.rolling(window=period, min_periods=period).apply(_last_idx_of_max, raw=True)
+    rolling_low_idx = low.rolling(window=period, min_periods=period).apply(_last_idx_of_min, raw=True)
+
+    aroon_up = 100 * (period - 1 - rolling_high_idx) / (period - 1)
+    aroon_down = 100 * (period - 1 - rolling_low_idx) / (period - 1)
+    osc = aroon_up - aroon_down
+    return pd.DataFrame({"aroon_up": aroon_up, "aroon_down": aroon_down, "aroon_osc": osc})
+
+
+# ==========================
+# 28) CMF - Chaikin Money Flow
+# ==========================
+
+def cmf(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, period: int = 20) -> pd.Series:
+    """Chaikin Money Flow."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    volume = _validate_series(volume, "volume")
+
+    mfm = ((close - low) - (high - close)) / (high - low)
+    mfm = mfm.replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    mfv = mfm * volume
+    return mfv.rolling(period, min_periods=period).sum() / volume.rolling(period, min_periods=period).sum()
+
+
+# ==========================
+# 29) Chaikin Oscillator
+# ==========================
+
+def adl(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series) -> pd.Series:
+    """Accumulation/Distribution Line (ADL)."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    volume = _validate_series(volume, "volume")
+    mfm = ((close - low) - (high - close)) / (high - low)
+    mfm = mfm.replace([np.inf, -np.inf], np.nan).fillna(0.0)
+    mfv = mfm * volume
+    return mfv.cumsum()
+
+
+def chaikin_oscillator(high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series, short: int = 3, long: int = 10) -> pd.Series:
+    """Chaikin Oscillator = EMA(ADL, short) - EMA(ADL, long)."""
+    line = adl(high, low, close, volume)
+    return ema(line, short) - ema(line, long)
+
+
+# ==========================
+# 30) Elder Ray Index (Bull/Bear Power)
+# ==========================
+
+def elder_ray(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 13) -> pd.DataFrame:
+    """Elder Ray: Bull Power e Bear Power."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    base_ema = ema(close, period)
+    bull = high - base_ema
+    bear = low - base_ema
+    return pd.DataFrame({"elder_bull": bull, "elder_bear": bear})
+
+
+# ==========================
+# 31) Force Index
+# ==========================
+
+def force_index(close: pd.Series, volume: pd.Series, period: int = 13) -> pd.DataFrame:
+    """Force Index bruto e suavizado por EMA(period)."""
+    close = _validate_series(close, "close")
+    volume = _validate_series(volume, "volume")
+    fi_raw = close.diff() * volume
+    fi_ema = ema(fi_raw.fillna(0.0), period)
+    return pd.DataFrame({"force_index": fi_raw, "force_index_ema": fi_ema})
+
+
+# ==========================
+# 32) Ultimate Oscillator
+# ==========================
+
+def ultimate_oscillator(high: pd.Series, low: pd.Series, close: pd.Series, p1: int = 7, p2: int = 14, p3: int = 28) -> pd.Series:
+    """Ultimate Oscillator (0..100)."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+
+    prev_close = close.shift(1)
+    bp = close - pd.concat([low, prev_close], axis=1).min(axis=1)
+    tr = pd.concat([high, prev_close], axis=1).max(axis=1) - pd.concat([low, prev_close], axis=1).min(axis=1)
+
+    avg1 = bp.rolling(p1).sum() / tr.rolling(p1).sum()
+    avg2 = bp.rolling(p2).sum() / tr.rolling(p2).sum()
+    avg3 = bp.rolling(p3).sum() / tr.rolling(p3).sum()
+
+    uo = 100 * (4 * avg1 + 2 * avg2 + avg3) / 7
+    return uo
+
+
+# ==========================
+# 33) Ease of Movement (EOM)
+# ==========================
+
+def eom(high: pd.Series, low: pd.Series, volume: pd.Series, period: int = 14) -> pd.Series:
+    """Ease of Movement com SMA(period)."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    volume = _validate_series(volume, "volume")
+    mid_move = ((high + low) / 2.0).diff()
+    box_ratio = (volume / (high - low).replace(0.0, np.nan))
+    raw = mid_move / box_ratio.replace(0.0, np.nan)
+    return sma(raw, period)
+
+
+# ==========================
+# 34) Mass Index
+# ==========================
+
+def mass_index(high: pd.Series, low: pd.Series, ema_period: int = 9, sum_period: int = 25) -> pd.Series:
+    """Mass Index padrão: soma de 25 períodos da razão EMA(range)/EMA(EMA(range))."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    rng = (high - low).abs()
+    ema1 = ema(rng, ema_period)
+    ema2 = ema(ema1, ema_period)
+    ratio = ema1 / ema2.replace(0.0, np.nan)
+    return ratio.rolling(sum_period).sum()
+
+
+# ==========================
+# 35) Qstick
+# ==========================
+
+def qstick(open_: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
+    """Qstick = SMA(close - open, period)."""
+    open_ = _validate_series(open_, "open")
+    close = _validate_series(close, "close")
+    return sma(close - open_, period)
+
+
+# ==========================
+# 36) Vortex Indicator
+# ==========================
+
+def vortex(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.DataFrame:
+    """Vortex Indicator: VI+ e VI-."""
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    prev_high = high.shift(1)
+    prev_low = low.shift(1)
+    vm_plus = (high - prev_low).abs()
+    vm_minus = (low - prev_high).abs()
+
+    prev_close = close.shift(1)
+    tr1 = (high - low).abs()
+    tr2 = (high - prev_close).abs()
+    tr3 = (low - prev_close).abs()
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+    vi_plus = vm_plus.rolling(period).sum() / tr.rolling(period).sum()
+    vi_minus = vm_minus.rolling(period).sum() / tr.rolling(period).sum()
+    return pd.DataFrame({"vi_plus": vi_plus, "vi_minus": vi_minus})
+
+
+# ==========================
+# 37) Stochastic RSI
+# ==========================
+
+def stoch_rsi(close: pd.Series, rsi_period: int = 14, stoch_period: int = 14, d_period: int = 3) -> pd.DataFrame:
+    """Stochastic RSI: stochRSI e sinal (SMA d_period)."""
+    close = _validate_series(close, "close")
+    rsi_val = rsi(close, rsi_period)
+    min_rsi = rsi_val.rolling(stoch_period, min_periods=stoch_period).min()
+    max_rsi = rsi_val.rolling(stoch_period, min_periods=stoch_period).max()
+    stoch = (rsi_val - min_rsi) / (max_rsi - min_rsi)
+    signal = sma(stoch, d_period)
+    return pd.DataFrame({"stoch_rsi": 100 * stoch, "stoch_rsi_signal": 100 * signal})
+
+
+# ==========================
+# 38) PVO - Percentage Volume Oscillator
+# ==========================
+
+def pvo(volume: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
+    """PVO (sobre volume), sua linha de sinal e histograma."""
+    volume = _validate_series(volume, "volume")
+    ema_fast = ema(volume, fast)
+    ema_slow = ema(volume, slow)
+    pvo_line = 100 * (ema_fast - ema_slow) / ema_slow.replace(0.0, np.nan)
+    signal_line = ema(pvo_line, signal)
+    hist = pvo_line - signal_line
+    return pd.DataFrame({"pvo": pvo_line, "pvo_signal": signal_line, "pvo_hist": hist})
+
+
+# ==========================
+# 39) KST - Know Sure Thing
+# ==========================
+
+def kst(close: pd.Series) -> pd.DataFrame:
+    """KST padrão e sinal (SMA 9)."""
+    close = _validate_series(close, "close")
+    # Componentes padrão (Pring):
+    r1 = roc(close, 10, as_percent=False).rolling(10).mean()
+    r2 = roc(close, 15, as_percent=False).rolling(10).mean()
+    r3 = roc(close, 20, as_percent=False).rolling(10).mean()
+    r4 = roc(close, 30, as_percent=False).rolling(15).mean()
+    kst_line = 100 * (r1 * 1 + r2 * 2 + r3 * 3 + r4 * 4)
+    signal = kst_line.rolling(9).mean()
+    return pd.DataFrame({"kst": kst_line, "kst_signal": signal})
+
+
+# ==========================
+# 40) Balance of Power (BOP)
+# ==========================
+
+def bop(open_: pd.Series, high: pd.Series, low: pd.Series, close: pd.Series) -> pd.Series:
+    """Balance of Power: (close - open) / (high - low)."""
+    open_ = _validate_series(open_, "open")
+    high = _validate_series(high, "high")
+    low = _validate_series(low, "low")
+    close = _validate_series(close, "close")
+    return (close - open_) / (high - low).replace(0.0, np.nan)

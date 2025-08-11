@@ -87,3 +87,47 @@ Isso irá salvar `examples/indicators_output.csv` com todas as colunas calculada
 - Para séries com poucos dados, os primeiros valores serão `NaN` devido às janelas.
 - Resultados podem variar marginalmente de outras bibliotecas por diferenças de arredondamento e inicialização.
 - Todas as funções operam sobre `pandas.Series` e retornam `Series` ou `DataFrame` conforme indicado.
+
+## +20 indicadores adicionados
+
+21. Keltner Channels
+22. Supertrend
+23. PPO (Percentage Price Oscillator)
+24. KAMA (Kaufman Adaptive Moving Average)
+25. TSI (True Strength Index)
+26. DPO (Detrended Price Oscillator)
+27. Aroon (Up/Down/Oscillator)
+28. CMF (Chaikin Money Flow)
+29. Chaikin Oscillator
+30. ADL (Accumulation/Distribution Line)
+31. Elder Ray Index (Bull/Bear Power)
+32. Force Index
+33. Ultimate Oscillator
+34. Ease of Movement (EOM)
+35. Mass Index
+36. Qstick
+37. Vortex Indicator (VI+/VI-)
+38. Stochastic RSI
+39. PVO (Percentage Volume Oscillator)
+40. KST (Know Sure Thing)
+41. BOP (Balance of Power)
+
+### Breve descrição dos novos
+- Keltner: EMA ± ATR*multiplicador
+- Supertrend: bandas por ATR com lógica de tendência (±1)
+- PPO/PVO: osciladores percentuais de preço/volume + sinal + hist
+- KAMA: média adaptativa de Kaufman
+- TSI: dupla EMA do momentum e da magnitude
+- DPO: remove tendência comparando close deslocado e SMA
+- Aroon: proximidade da última máxima/mínima
+- CMF/ADL/Chaikin Osc: fluxo monetário e sua variação
+- Elder Ray: bull/bear power relativos à EMA
+- Force Index: momentum ponderado por volume (bruto e EMA)
+- Ultimate: combinações de BP/TR em 3 janelas
+- EOM: facilidade de movimento normalizado pelo volume
+- Mass Index: razão de EMAs do range somada
+- Qstick: SMA de close - open
+- Vortex: direcionalidade baseada em VMs e ATR
+- StochRSI: estocástico aplicado ao RSI
+- KST: somatória ponderada de ROCs suavizados
+- BOP: relação de força de fechamento vs abertura no range
